@@ -1,0 +1,114 @@
+// Prisma schema — sistem voting karyawan berbasis RFID
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Admin ──────────────────────────────────────────────────────
+model AdminUser {
+  id           String @id @default(cuid())
+  username     String @unique
+  passwordHash String
+  name         String @default("Administrator")
+}
+
+// ── Event pemilihan ─────────────────────────────────────────────
+model Event {
+  id          String   @id @default(cuid())
+  name        String
+  // Bagian dari URL publik: /vote/<slug> dan /results/<slug>
+  slug        String   @unique
+  description String   @default("")
+  status      EventStatus @default(DRAFT)
+  // Posisi yang dipilih dalam satu kali vote (mis. KETUA + PENGAWAS)
+  positions   Position[]
+  candidates  Candidate[]
+  participants Participant[]
+  ballots     Ballot[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+// ── Posisi (Ketua, Pengawas, dst) ───────────────────────────────
+model Position {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name      String
+  order     Int     @default(0)
+  // 1 = pilih satu; >1 = pilih beberapa (pluralitas)
+  maxSelect Int     @default(1)
+  candidates Candidate[]
+  ballots   Ballot[]
+}
+
+// ── Kandidat ────────────────────────────────────────────────────
+model Candidate {
+  id         String  @id @default(cuid())
+  eventId    String
+  event      Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  positionId String
+  position   Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  name       String
+  // nomor urut, mis. 01, 02, 03
+  number     Int
+  photoUrl   String  @default("")
+  vision     String  @default("")
+  mission    String  @default("")
+  choices    BallotChoice[]
+}
+
+// ── Peserta (karyawan) ──────────────────────────────────────────
+model Participant {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  nik       String
+  name      String
+  division  String   @default("")
+  rfidUid   String?  // rahasia; tidak pernah dikirim ke UI publik
+  hasVoted  Boolean  @default(false)
+  votedAt   DateTime?
+  ballotId  String?  @unique
+  ballot    Ballot?  @relation("ParticipantReceipt", fields: [ballotId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, nik])
+  @@index([eventId, rfidUid])
+}
+
+// ── Ballot anonim ───────────────────────────────────────────────
+// TIDAK ada relasi langsung ke Participant dengan pilihan.
+// Pilihan kandidat disimpan terpisah (BallotChoice) sehingga
+// tabel peserta tidak pernah tahu isi pilihan seseorang.
+model Ballot {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  positionId  String
+  position    Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  receiptCode String   @unique @default(cuid())
+  castAt      DateTime @default(now())
+  choices     BallotChoice[]
+  voter       Participant? @relation("ParticipantReceipt")
+}
+
+model BallotChoice {
+  id          String   @id @default(cuid())
+  ballotId    String
+  ballot      Ballot   @relation(fields: [ballotId], references: [id], onDelete: Cascade)
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}

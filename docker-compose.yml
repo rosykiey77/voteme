@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: "voteme"
+      POSTGRES_PASSWORD: "voteme"
+      POSTGRES_DB: "voteme"
+    volumes:
+      - vote_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voteme -d voteme"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  voteme:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://voteme:voteme@db:5432/voteme?schema=public"
+      ADMIN_USERNAME: "admin"
+      ADMIN_PASSWORD: "admin123"
+      AUTH_SECRET: "ganti-dengan-string-acak-panjang"
+    volumes:
+      # Menyimpan penanda "sudah di-seed" agar data demo tidak dibuat ulang tiap recreate
+      - vote_seed:/app/.seed
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  vote_db:
+  vote_seed:

@@ -1,26 +1,320 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   VoteFrame — Design Tokens
+   Komposisi warna: netral slate gelap + brand amber (hangat) + biru (informasi)
+   + hijau (sukses) + merah (bahaya). Kontras teks body >= 4.5:1 (WCAG AA).
+   ============================================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Permukaan (dari paling belakang ke paling depan) */
+  --bg: #070b14;
+  --bg-soft: #0b1220;
+  --panel: #0e1626;
+  --panel-2: #142033;
+  --panel-3: #1b2a42;
+  --border: #24334a;
+  --border-strong: #35496a;
+
+  /* Teks */
+  --text: #eef2f9;
+  --text-soft: #c6d2e2;
+  --muted: #97a8c2;
+
+  /* Brand & status (nama lama dipertahankan agar kelas lama tetap jalan) */
+  --accent: #f59e0b;
+  --accent-2: #3b82f6;
+  --green: #22c55e;
+  --red: #ef4444;
+
+  /* Bentuk & efek */
+  --radius: 12px;
+  --radius-lg: 16px;
+  --ring: rgba(245, 158, 11, 0.32);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 14px 34px -20px rgba(0, 0, 0, 0.8);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-brand: #f59e0b;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(900px 520px at 12% -12%, rgba(59, 130, 246, 0.1), transparent 60%),
+    radial-gradient(820px 480px at 106% -6%, rgba(245, 158, 11, 0.08), transparent 58%),
+    linear-gradient(180deg, var(--bg-soft), var(--bg) 60%);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fff;
+}
+
+/* Scrollbar halus & konsisten */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3a55 transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a3a55;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3d5273;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
+/* Fokus keyboard yang jelas & konsisten di semua kontrol */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ── Panel / kartu ─────────────────────────────────────────────── */
+.panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)), var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+/* Kartu yang bisa diklik: umpan balik hover tanpa menggeser konten sekitar */
+.card-link {
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-link:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  background-color: var(--panel-2);
+  transform: translateY(-2px);
+}
+.card-link:active {
+  transform: translateY(0);
+}
+
+/* ── Form ──────────────────────────────────────────────────────── */
+.input {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 11px 13px;
+  color: var(--text);
+  outline: none;
+  font-size: 14.5px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.input::placeholder {
+  color: #6d81a0;
+}
+.input:hover:not(:disabled) {
+  border-color: var(--border-strong);
+}
+.input:focus {
+  background: var(--panel-3);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.input[type="file"].hidden {
+  display: none;
+}
+
+/* ── Tombol ────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, filter 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+  color: #23160a;
+  box-shadow: 0 10px 24px -14px rgba(249, 115, 22, 0.95);
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.07);
+  box-shadow: 0 12px 28px -14px rgba(249, 115, 22, 1);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--border-strong);
+}
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.btn-danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+/* ── Badge status ──────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.badge-active {
+  background: rgba(34, 197, 94, 0.14);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.badge-draft {
+  background: rgba(148, 163, 184, 0.14);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+.badge-closed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* ── Angka statistik ───────────────────────────────────────────── */
+.stat-value {
+  font-size: clamp(1.6rem, 1.15rem + 1.5vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ── Kotak ikon ────────────────────────────────────────────────── */
+.icon-tile {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  flex: none;
+}
+.icon-tile-info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.22);
+}
+.icon-tile-success {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+/* ── Animasi ───────────────────────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in-up {
+  animation: fadeInUp 0.35s ease both;
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+.pulse-ring {
+  animation: pulseRing 1.8s ease-out infinite;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+.pop-in {
+  animation: popIn 0.25s ease both;
+}
+
+/* Hormati preferensi pengguna yang mengurangi gerakan */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
